@@ -1,10 +1,11 @@
 'use strict';
 
 const tests = require('promises-aplus-tests');
+const Vouch = require('./vouch');
 
 const adapter = {
-  resolved(reason) { return Promise.resolve(reason); },
-  rejected(reason) { return Promise.reject(reason); },
+  resolved(reason) { return Vouch.resolve(reason); },
+  rejected(reason) { return Vouch.reject(reason); },
   deferred() {
 
     const deferred = {
@@ -12,7 +13,7 @@ const adapter = {
       reject: undefined
     };
 
-    deferred.promise = new Promise(function(resolve, reject) {
+    deferred.promise = new Vouch(function(resolve, reject) {
       deferred.resolve = resolve;
       deferred.reject = reject;
     });
@@ -25,6 +26,6 @@ const adapter = {
   }
 };
 
-tests(adapter, { reporter: "dot" }, function(err) {
+tests(adapter, { reporter: 'nyan' }, function(err) {
   console.log(err);
 });
