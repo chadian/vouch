@@ -1,4 +1,10 @@
-const status = require('./lib/status');
+'use strict';
+
+const statusOptions = require('./lib/status');
+const PENDING = statusOptions.PENDING;
+const FULFILLED = statusOptions.FULFILLED;
+const REJECTED = statusOptions.REJECTED;
+
 const thenable = require('./lib/thenable');
 
 class Vouch {
@@ -12,11 +18,11 @@ class Vouch {
 }
 
 Vouch.resolve = function(value) {
-  return thenable(value, 'FULFILLED');
+  return thenable(value, FULFILLED);
 };
 
 Vouch.reject = function (reason) {
-  return thenable(reason, 'REJECTED');
+  return thenable(reason, REJECTED);
 };
 
 module.exports = Vouch;
