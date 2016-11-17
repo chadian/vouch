@@ -1,7 +1,6 @@
 'use strict';
 
 const statusOptions = require('./lib/status');
-const PENDING = statusOptions.PENDING;
 const FULFILLED = statusOptions.FULFILLED;
 const REJECTED = statusOptions.REJECTED;
 
@@ -13,27 +12,30 @@ class Vouch {
       return;
     }
 
-    const state = {};
     const handler = function(useStatus) {
       return function(result) {
-        state.status = useStatus;
-        state.result = result;
+        if (useStatus === FULFILLED) {
+          this.resolve(result);
+        } else if (useStatus === REJECTED) {
+          this.reject(result);
+        }
       };
     };
 
     fn.call(null, handler(FULFILLED), handler(REJECTED));
-    this.then = thenable(state).then;
-
-    return;
   }
 }
 
 Vouch.resolve = function(value) {
-  return thenable({ result: value, status: FULFILLED });
+  const deferred = thenable();
+  deferred._resolve(value);
+  return deferred;
 };
 
 Vouch.reject = function (reason) {
-  return thenable({ result: reason, status: REJECTED });
+  const deferred = thenable();
+  deferred._reject(reason);
+  return deferred;
 };
 
 module.exports = Vouch;
