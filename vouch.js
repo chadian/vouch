@@ -12,23 +12,15 @@ class Vouch {
       return;
     }
 
-    const handler = function(useStatus) {
-      return function(result) {
-        if (useStatus === FULFILLED) {
-          this.resolve(result);
-        } else if (useStatus === REJECTED) {
-          this.reject(result);
-        }
-      };
-    };
-
-    fn.call(null, handler(FULFILLED), handler(REJECTED));
+    const deferred = thenable();
+    fn.call(null, deferred._fulfill, deferred._reject);
+    return deferred;
   }
 }
 
 Vouch.resolve = function(value) {
   const deferred = thenable();
-  deferred._resolve(value);
+  deferred._fulfill(value);
   return deferred;
 };
 
