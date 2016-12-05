@@ -14,7 +14,7 @@ const adapter = {
 
     return {
       promise: deferred,
-      resolve: deferred._resolve,
+      resolve: deferred._fulfill,
       reject: deferred._reject
     };
   }
