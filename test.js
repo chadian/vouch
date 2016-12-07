@@ -86,11 +86,11 @@ describe('`Vouch` class', function() {
   });
 
   describe('`reject` method', function() {
-    it('has a `reject` method', function() {
+    it('method exists', function() {
       assert.equal(typeof Vouch.reject, 'function');
     });
 
-    it('result from calling `reject` has a `then` method', function() {
+    it('has a `then` method after being called', function() {
       assert.equal(typeof Vouch.reject(true).then, 'function');
     });
   });
