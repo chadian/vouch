@@ -30,20 +30,27 @@ describe('`new Vouch()` instance', function() {
     assert.equal(typeof vouch.then, 'function');
   });
 
-  it('resolves when passed a resolving function', function() {
-    const willResolve = (resolve/*, reject*/) => resolve();
+  it('resolves when passed a resolving function', function(done) {
+    const willResolve = (resolve/*, reject*/) => resolve('hello');
     const vouch = new Vouch(willResolve);
 
-    vouch.then(() => assert.ok(true), () => assert.ok(false));
+    vouch.then(
+      () => {
+        assert.ok(true);
+        done();
+      },
+      () => assert.ok(false)
+    );
   });
 
-  it('resolves with value passed', function() {
+  it('resolves with value passed', function(done) {
     const expectedResolvedValue = "SPECIFIC VALUE";
     const willResolve = (resolve/*, reject*/) => resolve(expectedResolvedValue);
     const vouch = new Vouch(willResolve);
 
     vouch.then(resolvedValue => {
         assert.equal(resolvedValue, expectedResolvedValue);
+        done();
       },
       () => assert.ok(false)
     );
@@ -62,15 +69,58 @@ describe('`new Vouch()` instance', function() {
           assert.equal(resolvedValue, expectedResolvedValue);
           done();
         },
-        () => assert.ok(false) && done()
+        () => assert.ok(false)
       );
   });
 
-  it('rejects when passed a rejecting function', function() {
+  it('resolves after passing through a reject', function(done) {
+    const willReject = (resolve, reject) => reject('REJECTED');
+
+    const vouch = new Vouch(willReject);
+
+    vouch
+      // should skip
+      .then()
+      // should be handled with reject handler
+      .then(
+        resolved => assert(false),
+        rejected => assert(rejected === 'REJECTED')
+      )
+      // should fall back to the success handler
+      .then(
+        resolved => {
+          assert(true);
+          done();
+        },
+        rejected => assert(false)
+      );
+  });
+
+  it('rejects when passed a rejecting function', function(done) {
     const willReject = (resolve, reject) => reject();
     const vouch = new Vouch(willReject);
 
-    vouch.then(() => assert.ok(false), () => assert.ok(true));
+    vouch.then(() => assert.ok(false), () => assert.ok(true) || done());
+  });
+
+  it('rejects within reject handler if an error is thrown', function(done) {
+    const willReject = (resolve, reject) => reject('REJECTED');
+    const vouch = new Vouch(willReject);
+
+    vouch
+      // this will re-throw the rejected reason
+      // continuing the rejection chain
+      .then(
+        () => assert(false),
+        rejected => { throw(rejected); }
+      )
+      .then(
+        () => assert(false),
+        rejected => {
+          assert.equal(rejected, 'REJECTED');
+          done();
+        }
+      );
   });
 });
 
