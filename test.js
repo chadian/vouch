@@ -96,6 +96,26 @@ describe('`new Vouch()` instance', function() {
       );
   });
 
+  it('resolves with final resolution from nested returned thenables', function(done) {
+    const willResolve = resolve => resolve();
+    const vouch = new Vouch(willResolve)
+      .then(function() {
+          return {
+            then(onFullfill) {
+              return onFullfill({
+                then(onFullfill) {
+                  return onFullfill('REACHED THE DEPTHS');
+                }
+              });
+            }
+          };
+      })
+      .then(result => {
+        assert.equal(result, 'REACHED THE DEPTHS');
+        done();
+      });
+  });
+
   it('rejects when passed a rejecting function', function(done) {
     const willReject = (resolve, reject) => reject();
     const vouch = new Vouch(willReject);
