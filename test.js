@@ -1,6 +1,4 @@
 'use strict';
-
-const tests = require('promises-aplus-tests');
 const Vouch = require('./vouch');
 
 const adapter = {
@@ -26,6 +24,6 @@ const adapter = {
   }
 };
 
-tests(adapter, { reporter: 'nyan' }, function(err) {
-  console.log(err);
+describe("Promises/A+ Test Suite", function() {
+  require("promises-aplus-tests").mocha(adapter);
 });
