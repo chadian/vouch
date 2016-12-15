@@ -1,7 +1,4 @@
 {
-  "dependencies": {
-    "promises-aplus-tests": "^2.1.2"
-  },
   "name": "vouch",
   "version": "0.1.0",
   "description": "A play js promise library",
@@ -16,6 +13,9 @@
     "url": "https://github.com/chadian/vouch/issues"
   },
   "homepage": "https://github.com/chadian/vouch#readme",
+  "dependencies": {
+    "promises-aplus-tests": "^2.1.2"
+  },
   "devDependencies": {
     "mocha": "^3.1.2"
   },
