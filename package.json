@@ -17,6 +17,7 @@
     "promises-aplus-tests": "^2.1.2"
   },
   "devDependencies": {
+    "cz-conventional-changelog": "^1.2.0",
     "mocha": "^3.1.2"
   },
   "scripts": {
@@ -25,5 +26,10 @@
   "keywords": [
     "promise",
     "vouch"
-  ]
+  ],
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
 }
