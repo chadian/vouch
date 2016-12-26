@@ -1,10 +1,10 @@
 {
   "name": "vouch-promise",
-  "version": "0.1.0",
+  "version": "0.0.0-development",
   "description": "A play js promise library",
   "main": "vouch.js",
   "repository": {
-    "url": "git+ssh://git@github.com/chadian/vouch.git",
+    "url": "https://github.com/chadian/vouch.git",
     "type": "git"
   },
   "author": "Chad Carbert <chadcarbert@me.com>",
@@ -18,10 +18,12 @@
   },
   "devDependencies": {
     "cz-conventional-changelog": "^1.2.0",
-    "mocha": "^3.1.2"
+    "mocha": "^3.1.2",
+    "semantic-release": "^6.3.2"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "keywords": [
     "promise",
