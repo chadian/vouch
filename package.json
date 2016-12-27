@@ -2,7 +2,7 @@
   "name": "vouch-promise",
   "version": "1.0.1",
   "description": "A play js promise library",
-  "main": "vouch.js",
+  "main": "lib/vouch.js",
   "repository": {
     "url": "git+ssh://git@github.com/chadian/vouch.git",
     "type": "git"
@@ -17,11 +17,16 @@
     "promises-aplus-tests": "^2.1.2"
   },
   "devDependencies": {
+    "babel-cli": "^6.18.0",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-preset-stage-0": "^6.16.0",
     "cz-conventional-changelog": "^1.2.0",
     "mocha": "^3.1.2"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "compile": "babel --presets es2015,stage-0 -d lib/ src/",
+    "prepublish": "npm run compile"
   },
   "keywords": [
     "promise",
