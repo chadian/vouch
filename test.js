@@ -1,9 +1,11 @@
 'use strict';
 
 const tests = require('promises-aplus-tests');
-const Vouch = require('./vouch');
-const thenable = require('./lib/thenable');
+const Vouch = require('./src/vouch');
+const thenable = require('./src/lib/thenable');
 var assert = require('assert');
+
+
 
 const adapter = {
   resolved(reason) { return Vouch.resolve(reason); },
