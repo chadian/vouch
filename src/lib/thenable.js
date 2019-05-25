@@ -1,5 +1,3 @@
-'use strict';
-
 const statusOptions = require('./status');
 const PENDING = statusOptions.PENDING;
 const FULFILLED = statusOptions.FULFILLED;

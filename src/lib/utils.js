@@ -1,6 +1,3 @@
-
-module.exports = { isVouchable, adopt, pullThen, packageResult };
-
 function isVouchable(deferred) {
   if (!deferred) return false;
   return !!deferred.__VOUCHABLE__;
@@ -30,3 +27,10 @@ function packageResult(value) {
 
   return { value, then };
 }
+
+module.exports = {
+  isVouchable,
+  adopt,
+  pullThen,
+  packageResult
+};
