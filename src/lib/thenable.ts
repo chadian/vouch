@@ -1,30 +1,30 @@
-const statusOptions = require('./status');
-const PENDING = statusOptions.PENDING;
-const FULFILLED = statusOptions.FULFILLED;
-const REJECTED = statusOptions.REJECTED;
+import { PromiseStates } from './states';
+import { isVouchable, adopt, pullThen, packageResult } from './utils';
 
-const utils = require('./utils');
-
-function deferredFactory() {
+export default function deferredFactory() {
   const state = {
-    status: PENDING,
+    status: PromiseStates.Pending,
     result: undefined,
-    owed: []
+    owed: [],
+    value: undefined
   };
 
   const deferred = {
     __VOUCHABLE__: true,
     _state: state,
 
+    _onFullfilled: () => {},
+    _onRejected: () => {},
+
     // future value
-    then(onFulfilled, onRejected) {
+    then: function(onFulfilled, onRejected) {
       const freshThen = deferredFactory();
       freshThen._onFullfilled = onFulfilled;
       freshThen._onRejected = onRejected;
 
       state.owed.push(freshThen);
 
-      if (state.status !== PENDING) {
+      if (state.status !== PromiseStates.Pending) {
         settleUp(state.owed);
       }
 
@@ -38,13 +38,13 @@ function deferredFactory() {
         return;
       }
 
-      if (state.status !== PENDING) {
+      if (state.status !== PromiseStates.Pending) {
         return;
       }
 
       let result;
       try {
-        result = utils.packageResult(value);
+        result = packageResult(value);
 
         if (result.value && (typeof result.value === 'object' || typeof result.value === 'function') && typeof result.then === 'function') {
           resolution(deferred, result);
@@ -55,7 +55,7 @@ function deferredFactory() {
         return;
       }
 
-      state.status = FULFILLED;
+      state.status = PromiseStates.Fulfilled;
       state.value = result.value;
       settleUp(state.owed);
     },
@@ -66,11 +66,11 @@ function deferredFactory() {
         return;
       }
 
-      if (state.status !== PENDING) {
+      if (state.status !== PromiseStates.Pending) {
         return;
       }
 
-      state.status = REJECTED;
+      state.status = PromiseStates.Rejected;
       state.value = reason;
       settleUp(state.owed);
     }
@@ -89,7 +89,7 @@ function deferredFactory() {
     const value = state.value;
 
     let handler;
-    if (state.status === FULFILLED) {
+    if (state.status === PromiseStates.Fulfilled) {
       if (typeof deferred._onFullfilled !== 'function') {
         deferred._fulfill(value);
         return;
@@ -97,7 +97,7 @@ function deferredFactory() {
 
       handler = deferred._onFullfilled;
     }
-    else if (state.status === REJECTED) {
+    else if (state.status === PromiseStates.Rejected) {
       if (typeof deferred._onRejected !== 'function') {
         deferred._reject(value);
         return;
@@ -109,7 +109,7 @@ function deferredFactory() {
     setTimeout(() => {
       try {
         const resolutionValue = handler.call(undefined, value);
-        const result = utils.packageResult(resolutionValue);
+        const result = packageResult(resolutionValue);
         resolution(deferred, result);
       } catch (e) {
         deferred._reject(e);
@@ -125,14 +125,16 @@ function deferredFactory() {
       promise._reject(new TypeError('same thenable cannot resolve itself'));
       return;
     }
-    else if (utils.isVouchable(value)) {
-      utils.adopt(value, promise);
+    else if (isVouchable(value)) {
+      adopt(value, promise);
       return;
     }
     else if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
       if (typeof then === 'function') {
         let called = false;
-        const once = fn => function() { (!called && fn(...arguments), called = true); };
+        const once = (fn) => function(...args) {
+          (!called && fn(...args), called = true);
+        };
 
         try {
           then.call(value, once(promise._fulfill), once(promise._reject));
@@ -152,5 +154,3 @@ function deferredFactory() {
 
   return deferred;
 }
-
-module.exports = deferredFactory;

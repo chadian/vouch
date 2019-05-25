@@ -1,9 +1,9 @@
-function isVouchable(deferred) {
+export function isVouchable(deferred) {
   if (!deferred) return false;
   return !!deferred.__VOUCHABLE__;
 }
 
-function adopt(adopter, adoptee) {
+export function adopt(adopter, adoptee) {
   if (adopter._state === 'PENDING') {
     adoptee._state.status = PENDING;
   }
@@ -11,7 +11,7 @@ function adopt(adopter, adoptee) {
   adopter.then(adoptee._fulfill, adoptee._reject);
 }
 
-function pullThen(result) {
+export function pullThen(result) {
   if (result !== null && (typeof result === 'function' || typeof result === 'object')) {
     const then = result.then;
     return then;
@@ -20,17 +20,10 @@ function pullThen(result) {
   return null;
 }
 
-function packageResult(value) {
+export function packageResult(value) {
   let then;
   let thenException;
   then = pullThen(value);
 
   return { value, then };
 }
-
-module.exports = {
-  isVouchable,
-  adopt,
-  pullThen,
-  packageResult
-};
