@@ -73,18 +73,20 @@ export class Deferrable implements Thenable {
   }
 
   private settle(pastValue: any, settleFunction) {
-    let settledValue, settledState;
+    setTimeout(() => {
+      let settledValue, settledState;
 
-    try {
-      settledValue = settleFunction(pastValue);
-      settledState = PromiseStates.Fulfilled;
-    } catch(e) {
-      settledValue = e;
-      settledState = PromiseStates.Rejected;
-    }
+      try {
+        settledValue = settleFunction(pastValue);
+        settledState = PromiseStates.Fulfilled;
+      } catch (e) {
+        settledValue = e;
+        settledState = PromiseStates.Rejected;
+      }
 
-    this.setState(settledValue, settledState);
-    this.settleQueue();
+      this.setState(settledValue, settledState);
+      this.settleQueue();
+    }, 0);
   }
 
   public finalize(value, state: PromiseStates) {
