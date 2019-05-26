@@ -1,5 +1,104 @@
 import { PromiseStates } from './states';
 import { isVouchable, adopt, pullThen, packageResult } from './utils';
+import { inherits } from 'util';
+import { ResolveOptions } from 'dns';
+
+type ResolveValue = any;
+type ResolveHandler = (value?: ResolveValue) => ResolveValue;
+
+type RejectValue = any;
+type RejectHandler = (value?: RejectValue) => ResolveValue;
+
+type FinalPromiseState = PromiseStates.Rejected | PromiseStates.Fulfilled;
+
+type Thenable = {
+  then(
+    onResolve?: ResolveHandler,
+    onReject?: RejectHandler
+  ): Thenable
+}
+
+function isPending(d: Deferrable): boolean {
+  return d.state === PromiseStates.Pending;
+}
+
+export class Deferrable implements Thenable {
+  private settledValue: any = null;
+  private _state: PromiseStates = PromiseStates.Pending;
+  private onResolve: ResolveHandler;
+  private onReject: RejectHandler;
+  private deferrableQueue: Deferrable[] = [];
+
+  // TODO: see if this can go entirely private...
+  get state(): PromiseStates {
+    return this._state;
+  }
+
+  then(onResolve?: ResolveHandler, onReject?: RejectHandler) {
+    const deferrable = new Deferrable();
+    deferrable.onResolve = onResolve;
+    deferrable.onReject = onReject;
+
+    this.deferrableQueue.push(deferrable);
+
+    if (!isPending(this)) {
+      this.settleQueue();
+    }
+
+    return deferrable;
+  }
+
+  private settleQueue() {
+    const deferrableQueue = this.deferrableQueue;
+    const settledValue = this.settledValue;
+    const settledState = this.state as FinalPromiseState;
+
+    while (deferrableQueue.length) {
+      const deferred = deferrableQueue.shift();
+
+      if (settledState === PromiseStates.Fulfilled) {
+        deferred.fulfill(settledValue);
+      } else {
+        deferred.reject(settledValue);
+      }
+    }
+  }
+
+  fulfill(value: ResolveValue) {
+    this.settle(value, this.onResolve);
+  }
+
+  reject(value: RejectValue) {
+    this.settle(value, this.onReject);
+  }
+
+  private settle(pastValue: any, settleFunction) {
+    let settledValue, settledState;
+
+    try {
+      settledValue = settleFunction(pastValue);
+      settledState = PromiseStates.Fulfilled;
+    } catch(e) {
+      settledValue = e;
+      settledState = PromiseStates.Rejected;
+    }
+
+    this.setState(settledValue, settledState);
+    this.settleQueue();
+  }
+
+  public finalize(value, state: PromiseStates) {
+    this.setState(value, state);
+    this.settleQueue();
+  }
+
+  private setState(value, state: PromiseStates) {
+    if (isPending(this)) {
+      this.settledValue = value;
+      this._state = state;
+    }
+  }
+}
 
 export default function deferredFactory() {
   const state = {

@@ -1,29 +1,40 @@
 import thenable from './lib/thenable';
+import { Deferrable } from './lib/thenable';
+import { PromiseStates } from './lib/states';
+
+type ResolveValue = any;
+type ResolveHandler = (value?: ResolveValue) => ResolveValue;
+
+type RejectValue = any;
+type RejectHandler = (value?: RejectValue) => ResolveValue;
 
 export default class Vouch {
-  static resolve(value: any) {
-    const deferred = thenable();
-    deferred._fulfill(value);
+  static resolve(value: ResolveValue) {
+    const deferred = new Deferrable();
+    deferred.finalize(value, PromiseStates.Fulfilled);
     return deferred;
   }
 
-  static reject(value: any) {
-    const deferred = thenable();
-    deferred._reject(value);
+  static reject(value: RejectValue) {
+    const deferred = new Deferrable();
+    deferred.finalize(value, PromiseStates.Rejected);
     return deferred;
   }
 
-  then: (onFullfilled?: any, onRejected?: any) => any;
-
-  constructor(fn: (resolv:any, reject:any) => any) {
+  constructor(fn: (resolve?: ResolveHandler, reject?: RejectHandler) => any) {
     if (typeof fn !== 'function') {
       return;
     }
 
-    const deferred = thenable();
-    this.then = deferred.then;
-    fn.call(null, deferred._fulfill, deferred._reject);
+    const deferred = new Deferrable();
+    const then = deferred.then.bind(deferred);
+    const fulfill = (value) => deferred.finalize(value, PromiseStates.Fulfilled);
+    const reject = (value) => deferred.finalize(value, PromiseStates.Rejected);
 
-    return deferred;
+    fn.call(null, fulfill, reject);
+
+    this.then = then;
   }
+
+  then: (onFullfilled?: any, onRejected?: any) => any;
 }

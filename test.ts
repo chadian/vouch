@@ -1,13 +1,32 @@
 'use strict';
 import Vouch from './src/vouch';
-import thenable from './src/lib/thenable';
+import { Deferrable, default as thenable } from './src/lib/thenable';
+import { PromiseStates } from './src/lib/states';
+
 const assert = require('assert');
 const PromiseAPlusTests = require('promises-aplus-tests');
+
+describe('Deferrable', function() {
+  it('can resolves onResolve handler with resolved value', function () {
+    const deferrable = new Deferrable().then(
+      resolve => assert.equal(resolve, 'RESOLVED!')
+    );
+
+    deferrable.fulfill('RESOLVED!');
+  });
+
+  describe('#constructor', function() {
+    it('has an initial state of pending', function() {
+      const deferrable = new Deferrable();
+      assert.equal(deferrable.state, PromiseStates.Pending);
+    });
+  });
+});
 
 describe("Quick Vouch Sanity Tests", function() {
   describe('`new Vouch()` instance', function () {
     it('has a `then` method', function () {
-      const vouch = new Vouch(() => { });
+      const vouch = new Vouch(() => {});
       assert.equal(typeof vouch.then, 'function');
     });
 
@@ -16,17 +35,24 @@ describe("Quick Vouch Sanity Tests", function() {
       const vouch = new Vouch(willResolve);
 
       vouch.then(
-        () => {
-          assert.ok(true);
-          done();
-        },
-        () => assert.ok(false)
+        () => assert.ok(true) || done(),
+        () => assert.ok(false) || done()
+      );
+    });
+
+    it('rejects when passed a rejecting function', function(done) {
+      const willReject = (resolve, reject) => reject('hello');
+      const vouch = new Vouch(willReject);
+
+      vouch.then(
+        () => assert.ok(false) || done(),
+        () => assert.ok(true) || done()
       );
     });
 
     it('resolves with value passed', function (done) {
       const expectedResolvedValue = "SPECIFIC VALUE";
-      const willResolve = (resolve/*, reject*/) => resolve(expectedResolvedValue);
+      const willResolve = (resolve) => resolve(expectedResolvedValue);
       const vouch = new Vouch(willResolve);
 
       vouch.then(resolvedValue => {
@@ -39,7 +65,7 @@ describe("Quick Vouch Sanity Tests", function() {
 
     it('resolves with value passed through multiple `then` chains', function (done) {
       const expectedResolvedValue = "SPECIFIC VALUE";
-      const willResolve = (resolve/*, reject*/) => resolve(expectedResolvedValue);
+      const willResolve = (resolve) => resolve(expectedResolvedValue);
       const passThrough = value => value;
       const vouch = new Vouch(willResolve);
 
@@ -95,13 +121,6 @@ describe("Quick Vouch Sanity Tests", function() {
           assert.equal(result, 'REACHED THE DEPTHS');
           done();
         });
-    });
-
-    it('rejects when passed a rejecting function', function (done) {
-      const willReject = (resolve, reject) => reject();
-      const vouch = new Vouch(willReject);
-
-      vouch.then(() => assert.ok(false), () => assert.ok(true) || done());
     });
 
     it('rejects within reject handler if an error is thrown', function (done) {
