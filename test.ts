@@ -1,4 +1,5 @@
-'use strict';
+/// <reference types="./src/typings" />
+
 import Vouch from './src/vouch';
 import { Deferrable } from './src/lib/thenable';
 import { PromiseStates } from './src/lib/states';

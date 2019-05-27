@@ -1,52 +1,18 @@
 import { PromiseStates } from './states';
+import {
+  CallOnce,
+  runTask
+} from './utils';
 
-type ResolveValue = any;
-type ResolveHandler = (value?: ResolveValue) => ResolveValue;
-
-type RejectValue = any;
-type RejectHandler = (value?: RejectValue) => ResolveValue;
-
-type FinalPromiseState = PromiseStates.Rejected | PromiseStates.Fulfilled;
-
-type Thenable = {
-  then(
-    onResolve?: ResolveHandler,
-    onReject?: RejectHandler
-  ): Thenable
-}
-
-function isThenable(T: any): T is Thenable{
-  return T && typeof T.then === 'function' ? true : false;
-}
 
 function isPending(d: Deferrable): boolean {
   return d.state === PromiseStates.Pending;
-}
-
-class CallOnce {
-  private called = false;
-
-  get wasCalled() {
-    return this.called;
-  }
-
-  track(fn) {
-    const trackingInstance = this;
-    return function(...args) {
-      if (!trackingInstance.wasCalled) {
-        fn.call(this, ...args);
-        trackingInstance.called = true;
-      }
-    }
-  }
 }
 
 // TODO: If node environment use process.nextTick
 // microtasks but the browser doesn't expose a way
 // of scheduling these, so we'll use `setTimeout`
 // which gives us a task.
-const runTask = (fn: () => any) => setTimeout(fn, 0);
-
 export class Deferrable implements Thenable {
   private settledValue: any = null;
   private _state: PromiseStates = PromiseStates.Pending;
