@@ -1,4 +1,3 @@
-import thenable from './lib/thenable';
 import { Deferrable } from './lib/thenable';
 import { PromiseStates } from './lib/states';
 
@@ -9,13 +8,13 @@ type RejectValue = any;
 type RejectHandler = (value?: RejectValue) => ResolveValue;
 
 export default class Vouch {
-  static resolve(value: ResolveValue) {
+  static resolve(value?: ResolveValue) {
     const deferred = new Deferrable();
     deferred.finalize(value, PromiseStates.Fulfilled);
     return deferred;
   }
 
-  static reject(value: RejectValue) {
+  static reject(value?: RejectValue) {
     const deferred = new Deferrable();
     deferred.finalize(value, PromiseStates.Rejected);
     return deferred;

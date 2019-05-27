@@ -1,7 +1,4 @@
 import { PromiseStates } from './states';
-import { isVouchable, adopt, pullThen, packageResult } from './utils';
-import { inherits } from 'util';
-import { ResolveOptions } from 'dns';
 
 type ResolveValue = any;
 type ResolveHandler = (value?: ResolveValue) => ResolveValue;
@@ -18,9 +15,37 @@ type Thenable = {
   ): Thenable
 }
 
+function isThenable(T: any): T is Thenable{
+  return T && typeof T.then === 'function' ? true : false;
+}
+
 function isPending(d: Deferrable): boolean {
   return d.state === PromiseStates.Pending;
 }
+
+class CallOnce {
+  private called = false;
+
+  get wasCalled() {
+    return this.called;
+  }
+
+  track(fn) {
+    const trackingInstance = this;
+    return function(...args) {
+      if (!trackingInstance.wasCalled) {
+        fn.call(this, ...args);
+        trackingInstance.called = true;
+      }
+    }
+  }
+}
+
+// TODO: If node environment use process.nextTick
+// microtasks but the browser doesn't expose a way
+// of scheduling these, so we'll use `setTimeout`
+// which gives us a task.
+const runTask = (fn: () => any) => setTimeout(fn, 0);
 
 export class Deferrable implements Thenable {
   private settledValue: any = null;
@@ -49,209 +74,101 @@ export class Deferrable implements Thenable {
   }
 
   private settleQueue() {
+    // console.log('** settling queue');
     const deferrableQueue = this.deferrableQueue;
     const settledValue = this.settledValue;
     const settledState = this.state as FinalPromiseState;
 
     while (deferrableQueue.length) {
       const deferred = deferrableQueue.shift();
-
-      if (settledState === PromiseStates.Fulfilled) {
-        deferred.fulfill(settledValue);
-      } else {
-        deferred.reject(settledValue);
-      }
+      deferred.settle(settledValue, settledState);
     }
   }
 
-  fulfill(value: ResolveValue) {
-    this.settle(value, this.onResolve);
-  }
+  private settle(pastValue: any, pastState: FinalPromiseState) {
+    const settleWith = pastState === PromiseStates.Fulfilled
+      ? this.onResolve
+      : this.onReject;
 
-  reject(value: RejectValue) {
-    this.settle(value, this.onReject);
-  }
+    if (typeof settleWith !== 'function') {
+      this.finalize(pastValue, pastState);
+      return;
+    }
 
-  private settle(pastValue: any, settleFunction) {
-    setTimeout(() => {
-      let settledValue, settledState;
-
+    runTask(() => {
       try {
-        settledValue = settleFunction(pastValue);
-        settledState = PromiseStates.Fulfilled;
+        const settledValue = settleWith(pastValue);
+        Deferrable.resolution(this, settledValue);
       } catch (e) {
-        settledValue = e;
-        settledState = PromiseStates.Rejected;
+        this.finalize(e, PromiseStates.Rejected);
       }
-
-      this.setState(settledValue, settledState);
-      this.settleQueue();
-    }, 0);
+    });
   }
 
-  public finalize(value, state: PromiseStates) {
-    this.setState(value, state);
+  public finalize(value, state: FinalPromiseState) {
+    this.transition(value, state);
     this.settleQueue();
   }
 
-  private setState(value, state: PromiseStates) {
+  private transition(value, state: PromiseStates) {
+    // since every Deferred starts off as pending and can
+    // only be moved to final state once we ensure that
+    // we're in a pending state to be able to move forward
     if (isPending(this)) {
       this.settledValue = value;
       this._state = state;
     }
   }
-}
 
-export default function deferredFactory() {
-  const state = {
-    status: PromiseStates.Pending,
-    result: undefined,
-    owed: [],
-    value: undefined
-  };
-
-  const deferred = {
-    __VOUCHABLE__: true,
-    _state: state,
-
-    _onFullfilled: () => {},
-    _onRejected: () => {},
-
-    // future value
-    then: function(onFulfilled, onRejected) {
-      const freshThen = deferredFactory();
-      freshThen._onFullfilled = onFulfilled;
-      freshThen._onRejected = onRejected;
-
-      state.owed.push(freshThen);
-
-      if (state.status !== PromiseStates.Pending) {
-        settleUp(state.owed);
-      }
-
-      return freshThen;
-    },
-
-    // future work
-    _fulfill(value) {
-      if (value === deferred) {
-        deferred._reject(new TypeError('same thenable cannot fulfill itself'));
-        return;
-      }
-
-      if (state.status !== PromiseStates.Pending) {
-        return;
-      }
-
-      let result;
-      try {
-        result = packageResult(value);
-
-        if (result.value && (typeof result.value === 'object' || typeof result.value === 'function') && typeof result.then === 'function') {
-          resolution(deferred, result);
-          return;
-        }
-      } catch (e) {
-        deferred._reject(e);
-        return;
-      }
-
-      state.status = PromiseStates.Fulfilled;
-      state.value = result.value;
-      settleUp(state.owed);
-    },
-
-    _reject(reason) {
-      if (reason === deferred) {
-        deferred._reject(new TypeError('same thenable cannot reject itself'));
-        return;
-      }
-
-      if (state.status !== PromiseStates.Pending) {
-        return;
-      }
-
-      state.status = PromiseStates.Rejected;
-      state.value = reason;
-      settleUp(state.owed);
-    }
-  };
-
-  // loop through "owed" thens and settle up
-  // by resolving the value
-  function settleUp(owed) {
-    while (owed.length) {
-      const deferred = owed.shift();
-      settleDefferred(deferred);
+  private adopt(d: Deferrable) {
+    if (isPending(d)) {
+      const fulfill = (value) => Deferrable.resolution(this, value);
+      const reject = (value) => Deferrable.resolution(this, value, PromiseStates.Rejected);
+      d.then(fulfill, reject);
+    } else {
+      Deferrable.resolution(this, d.settledValue, d.state as FinalPromiseState);
     }
   }
 
-  function settleDefferred(deferred) {
-    const value = state.value;
-
-    let handler;
-    if (state.status === PromiseStates.Fulfilled) {
-      if (typeof deferred._onFullfilled !== 'function') {
-        deferred._fulfill(value);
-        return;
-      }
-
-      handler = deferred._onFullfilled;
-    }
-    else if (state.status === PromiseStates.Rejected) {
-      if (typeof deferred._onRejected !== 'function') {
-        deferred._reject(value);
-        return;
-      }
-
-      handler = deferred._onRejected;
+  static resolution(d: Deferrable, value: ResolveValue, state: FinalPromiseState = PromiseStates.Fulfilled) {
+    if (d === value) {
+      const error = new TypeError('Sorry, a promise cannot be resolved with itself');
+      d.finalize(error, PromiseStates.Rejected);
+      return;
     }
 
-    setTimeout(() => {
+    if (value instanceof Deferrable) {
+      d.adopt(value);
+      return;
+    }
+
+    // TODO: Collapse these conditions into a utility function check, ie: `isNonObjectOrFunction`
+    if ((value !== null) && (typeof value === 'object' || typeof value === 'function')) {
+      let then;
       try {
-        const resolutionValue = handler.call(undefined, value);
-        const result = packageResult(resolutionValue);
-        resolution(deferred, result);
-      } catch (e) {
-        deferred._reject(e);
+        then = value.then;
+      } catch(e) {
+        Deferrable.resolution(d, e, PromiseStates.Rejected);
+        return;
       }
-    }, 0);
 
-    return;
-  }
-
-  // promise resolution procedure
-  function resolution(promise, { value, then }) {
-    if (promise === value) {
-      promise._reject(new TypeError('same thenable cannot resolve itself'));
-      return;
-    }
-    else if (isVouchable(value)) {
-      adopt(value, promise);
-      return;
-    }
-    else if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
-      if (typeof then === 'function') {
-        let called = false;
-        const once = (fn) => function(...args) {
-          (!called && fn(...args), called = true);
-        };
+      if (then && typeof then === 'function') {
+        const callOnce = new CallOnce();
+        const fulfill = callOnce.track((value) => Deferrable.resolution(d, value));
+        const reject = callOnce.track((value) => d.finalize(value, PromiseStates.Rejected));
 
         try {
-          then.call(value, once(promise._fulfill), once(promise._reject));
-        } catch(e) {
-          if (!called) {
-            promise._reject(e);
-            called = true;
+          then.call(value, fulfill, reject);
+        } catch (e) {
+          if (!callOnce.wasCalled) {
+            reject(e);
           }
         }
+
         return;
       }
     }
 
-    promise._fulfill(value);
-    return;
+    d.finalize(value, state);
   }
-
-  return deferred;
 }
