@@ -22,7 +22,7 @@ type Thenable = {
 // microtasks but the browser doesn't expose a way
 // of scheduling these, so we'll use `setTimeout`
 // which gives us a task.
-export class Deferrable implements Thenable {
+export default class Deferrable implements Thenable {
   private settledValue: any = null;
   private _state: PromiseStates = PromiseStates.Pending;
   private onResolve: ResolveHandler;

@@ -1,4 +1,4 @@
-import { Deferrable } from "./thenable";
+import Deferrable from "./Deferrable";
 import { PromiseStates } from './PromiseStates';
 
 export class CallOnce {
