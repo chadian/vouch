@@ -4,7 +4,12 @@
     "allowJs": true,
     "target": "es5"
   },
+
   "include": [
-    "./src/**/*"
+    "src/**/*"
+  ],
+
+  "typeRoots": [
+    "./src/typings"
   ]
 }

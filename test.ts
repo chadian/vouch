@@ -1,27 +1,25 @@
-/// <reference types="./src/typings" />
-
+import { PromiseStates } from './src/lib/PromiseStates';
 import Vouch from './src/vouch';
 import { Deferrable } from './src/lib/thenable';
-import { PromiseStates } from './src/lib/states';
 
 const assert = require('assert');
 const PromiseAPlusTests = require('promises-aplus-tests');
 
 describe('Deferrable', function() {
-it('can resolves onResolve handler with resolved value', function () {
-  const deferrable = new Deferrable().then(
-    resolve => assert.equal(resolve, 'RESOLVED!')
-  );
+  it('can resolves onResolve handler with resolved value', function () {
+    const deferrable = new Deferrable().then(
+      resolve => assert.equal(resolve, 'RESOLVED!')
+    );
 
-  deferrable.finalize('RESOLVED!', PromiseStates.Fulfilled);
-});
-
-describe('#constructor', function() {
-  it('has an initial state of pending', function() {
-    const deferrable = new Deferrable();
-    assert.equal(deferrable.state, PromiseStates.Pending);
+    deferrable.finalize('RESOLVED!', PromiseStates.Fulfilled);
   });
-});
+
+  describe('#constructor', function() {
+    it('has an initial state of pending', function() {
+      const deferrable = new Deferrable();
+      assert.equal(deferrable.state, PromiseStates.Pending);
+    });
+  });
 });
 
 describe("Quick Vouch Sanity Tests", function() {

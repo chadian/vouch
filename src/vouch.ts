@@ -1,11 +1,11 @@
-import { Deferrable } from './lib/thenable';
-import { PromiseStates } from './lib/states';
-
-type ResolveValue = any;
-type ResolveHandler = (value?: ResolveValue) => ResolveValue;
-
-type RejectValue = any;
-type RejectHandler = (value?: RejectValue) => ResolveValue;
+import { PromiseStates } from './lib/PromiseStates';
+import {
+  Deferrable,
+  ResolveValue,
+  RejectValue,
+  ResolveHandler,
+  RejectHandler
+} from './lib/thenable';
 
 export default class Vouch {
   static resolve(value?: ResolveValue) {

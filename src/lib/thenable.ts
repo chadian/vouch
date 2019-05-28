@@ -1,14 +1,23 @@
-import { PromiseStates } from './states';
 import {
   CallOnce,
-  runTask
+  runTask,
+  isPending
 } from './utils';
 
+import { PromiseStates } from './PromiseStates';
 
-function isPending(d: Deferrable): boolean {
-  return d.state === PromiseStates.Pending;
+export type ResolveValue = any;
+export type ResolveHandler = (value?: ResolveValue) => ResolveValue;
+export type RejectValue = any;
+export type RejectHandler = (value?: RejectValue) => ResolveValue;
+type FinalPromiseState = PromiseStates.Rejected | PromiseStates.Fulfilled;
+
+type Thenable = {
+  then(
+    onResolve?: ResolveHandler,
+    onReject?: RejectHandler
+  ): Thenable
 }
-
 // TODO: If node environment use process.nextTick
 // microtasks but the browser doesn't expose a way
 // of scheduling these, so we'll use `setTimeout`
@@ -20,7 +29,6 @@ export class Deferrable implements Thenable {
   private onReject: RejectHandler;
   private deferrableQueue: Deferrable[] = [];
 
-  // TODO: see if this can go entirely private...
   get state(): PromiseStates {
     return this._state;
   }
@@ -40,7 +48,6 @@ export class Deferrable implements Thenable {
   }
 
   private settleQueue() {
-    // console.log('** settling queue');
     const deferrableQueue = this.deferrableQueue;
     const settledValue = this.settledValue;
     const settledState = this.state as FinalPromiseState;

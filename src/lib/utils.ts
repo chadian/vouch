@@ -1,3 +1,6 @@
+import { Deferrable } from "./thenable";
+import { PromiseStates } from './PromiseStates';
+
 export class CallOnce {
   private called = false;
 
@@ -17,3 +20,7 @@ export class CallOnce {
 }
 
 export const runTask = (fn: () => any) => setTimeout(fn, 0);
+
+export function isPending(d: Deferrable): boolean {
+  return d.state === PromiseStates.Pending;
+}
