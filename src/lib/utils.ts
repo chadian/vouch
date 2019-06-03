@@ -28,3 +28,21 @@ export const runTask = (fn: () => any) => setTimeout(fn, 0);
 export function isPending(d: Deferrable): boolean {
   return d.state === PromiseStates.Pending;
 }
+
+export function extractThen(potentialThenable): { then?: any, error?: any } {
+  let result = { then: undefined, error: undefined };
+
+  try {
+    result.then = potentialThenable.then;
+  } catch (e) {
+    result.error = e;
+  }
+
+  return result;
+}
+
+// In the case we have a non-null object, or a function,
+// then it could be a thenable (something containing a `.then` property)
+export function isPotentialThenable(value): boolean {
+  return value !== null && (typeof value === 'object' || typeof value === 'function');
+}

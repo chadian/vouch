@@ -1,7 +1,9 @@
 import {
   CallOnce,
   runTask,
-  isPending
+  isPending,
+  extractThen,
+  isPotentialThenable
 } from './utils';
 
 import { PromiseStates } from './PromiseStates';
@@ -112,17 +114,15 @@ export default class Deferrable implements Thenable {
       return;
     }
 
-    // TODO: Collapse these conditions into a utility function check, ie: `isNonObjectOrFunction`
-    if ((value !== null) && (typeof value === 'object' || typeof value === 'function')) {
-      let then;
-      try {
-        then = value.then;
-      } catch (e) {
-        this.resolution(e, PromiseStates.Rejected);
+    if (isPotentialThenable(value)) {
+      let { then, error } = extractThen(value);
+
+      if (error) {
+        this.resolution(error, PromiseStates.Rejected);
         return;
       }
 
-      if (then && typeof then === 'function') {
+      if (typeof then === 'function') {
         const callOnce = new CallOnce();
         const fulfill = callOnce.track((value) => this.resolution(value));
         const reject = callOnce.track((value) => this.finalize(value, PromiseStates.Rejected));

@@ -143,7 +143,6 @@ describe("Quick Vouch Sanity Tests", function() {
       .resolve()
       .then(() => eventual)
       .then(value => {
-        console.log('asserting!')
         assert.equal(value, 'FULFILLED');
         done();
       });
