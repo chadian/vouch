@@ -2,18 +2,18 @@ import Deferrable from "./Deferrable";
 import { PromiseStates } from './PromiseStates';
 
 export class CallOnce {
-  private called = false;
-
-  get wasCalled() {
-    return this.called;
+  get called() {
+    return this._called;
   }
+
+  private _called = false
 
   track(fn) {
     const trackingInstance = this;
     return function (...args) {
-      if (!trackingInstance.wasCalled) {
+      if (!trackingInstance.called) {
         fn.call(this, ...args);
-        trackingInstance.called = true;
+        trackingInstance._called = true;
       }
     }
   }

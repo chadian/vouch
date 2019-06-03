@@ -130,7 +130,7 @@ export default class Deferrable implements Thenable {
         try {
           then.call(value, fulfill, reject);
         } catch (e) {
-          if (!callOnce.wasCalled) {
+          if (!callOnce.called) {
             reject(e);
           }
         }
