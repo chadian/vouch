@@ -1,8 +1,9 @@
 {
   "name": "vouch-promise",
   "version": "1.0.2",
-  "description": "A play js promise library",
+  "description": "A typescript promise library",
   "main": "dist/vouch.js",
+  "types": "dist/vouch.d.ts",
   "repository": {
     "url": "git+ssh://git@github.com/chadian/vouch.git",
     "type": "git"
@@ -21,13 +22,16 @@
     "cz-conventional-changelog": "^1.2.0",
     "mocha": "^3.1.2",
     "promises-aplus-tests": "^2.1.2",
+    "release-it": "^12.2.2",
     "ts-node": "^8.1.1",
     "typescript": "^3.4.5"
   },
   "scripts": {
     "test": "mocha --compilers ts:ts-node/register ./test.ts",
-    "compile": "tsc",
-    "prepublish": "npm run compile"
+    "build": "tsc",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run test",
+    "release": "release-it"
   },
   "keywords": [
     "promise",
