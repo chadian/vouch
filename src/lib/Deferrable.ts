@@ -6,7 +6,7 @@ import {
   isPotentialThenable
 } from './utils';
 
-import { PromiseStates } from './PromiseStates';
+import { PromiseStates } from './promise-states';
 
 export type ResolveValue = any;
 export type ResolveHandler = (value?: ResolveValue) => ResolveValue;
@@ -21,7 +21,7 @@ type Thenable = {
   ): Thenable
 }
 
-export default class Deferrable implements Thenable {
+export class Deferrable implements Thenable {
   private settledValue: any = null;
   private _state: PromiseStates = PromiseStates.Pending;
   private onResolve: ResolveHandler;

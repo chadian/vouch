@@ -1,13 +1,13 @@
-import { PromiseStates } from './lib/PromiseStates';
+import { PromiseStates } from './lib/promise-states';
 import {
-  default as Deferrable,
+  Deferrable,
   ResolveValue,
   RejectValue,
   ResolveHandler,
   RejectHandler
-} from './lib/Deferrable';
+} from './lib/deferrable';
 
-export default class Vouch {
+export class Vouch {
   static resolve(value?: ResolveValue) {
     const deferred = new Deferrable();
     deferred.finalize(value, PromiseStates.Fulfilled);

@@ -1,5 +1,5 @@
-import Deferrable from "./Deferrable";
-import { PromiseStates } from './PromiseStates';
+import { Deferrable } from "./deferrable";
+import { PromiseStates } from './promise-states';
 
 export class CallOnce {
   get called() {
