@@ -2,8 +2,8 @@
   "name": "vouch-promise",
   "version": "1.0.2",
   "description": "A typescript promise library",
-  "main": "dist/vouch.js",
-  "types": "dist/vouch.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "repository": {
     "url": "git+ssh://git@github.com/chadian/vouch.git",
     "type": "git"

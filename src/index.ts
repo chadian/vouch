@@ -1,11 +1,11 @@
-import { PromiseStates } from './lib/promise-states';
+import { PromiseStates } from './promise-states';
 import {
   Deferrable,
   ResolveValue,
   RejectValue,
   ResolveHandler,
   RejectHandler
-} from './lib/deferrable';
+} from './deferrable';
 
 export class Vouch {
   static resolve(value?: ResolveValue) {

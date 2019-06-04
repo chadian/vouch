@@ -1,6 +1,6 @@
-import { PromiseStates } from './src/lib/promise-states';
-import { Vouch } from './src/vouch';
-import { Deferrable } from './src/lib/deferrable';
+import { PromiseStates } from './src/promise-states';
+import { Vouch } from './src';
+import { Deferrable } from './src/deferrable';
 
 const assert = require('assert');
 const PromiseAPlusTests = require('promises-aplus-tests');
